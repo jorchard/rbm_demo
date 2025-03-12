@@ -113,12 +113,12 @@ class myRBM:
 			hid = around(random.rand(numhid))
 			# First we run the self for 5 steps
 			for j in range(5):
-				hid = Recognize(vis, self, 3)
-				vis = Generate(hid, self, 3)
+				hid = to_binary( Recognize(vis, self, 3) )
+				vis = to_binary( Generate(hid, self, 3) )
 			# The run it some more and record states visited
 			for j in range(10):
-				hid = Recognize(vis, self, 1)
-				vis = Generate(hid, self, 1)
+				hid = to_binary( Recognize(vis, self, 1) )
+				vis = to_binary( Generate(hid, self, 1) )
 				vis_idx = Vec2Int(vis)
 				hid_idx = Vec2Int(hid)
 				s_count[vis_idx, hid_idx] += 1
@@ -378,6 +378,8 @@ class myRBM:
 				for batch in batches:
 
 					# Reset counters for tabulating statistics
+					# There aren't really RBMs; they are just used to duplicate
+					# the weights data structures.
 					clamped_stats = CreateRBM(numvis, numhid, 0)
 					free_stats = CreateRBM(numvis, numhid, 0)
 
@@ -389,7 +391,7 @@ class myRBM:
 					hid = Recognize(vis, self, T)
 					clamped_stats.IncrementStats(vis, hid)
 
-					vis2 = Generate(hid, self, T)
+					vis2 = Generate(to_binary(hid), self, T)
 
 					hid2 = Recognize(vis2, self, T)
 					free_stats.IncrementStats(vis2, hid2)
@@ -622,15 +624,16 @@ def Recognize(vis, net, T):
 		hid_curr = -net.hbias + dot(vis, net.vh)
 	else:
 		hid_curr = -outer(ones(len(vis)), net.hbias) + vis@net.vh
-	#pdb.set_trace()
 	hidprob = logistic( hid_curr , T )
 	#d = len(hidprob)
-	hid_copy = ( hidprob > random.random(np.shape(hidprob)) )
+	#hid_copy = ( hidprob > random.random(np.shape(hidprob)) )
 
-	h = hid_copy.astype(float)
-	return h
+	#h = hid_copy.astype(float)
+	return hidprob
 
-
+def to_binary(p):
+	v = ( p > random.random(np.shape(p)) )
+	return v.astype(float)
 
 def Generate(hid, net, T):
 	'''
@@ -659,10 +662,10 @@ def Generate(hid, net, T):
 		vis_curr = -outer(ones(len(hid)), net.vbias) + dot(net.vh, hid.T).T
 	visprob = logistic( vis_curr , T )
 	#d = len(visprob)
-	vis_copy = ( visprob > random.random(np.shape(visprob)) )
+	#vis_copy = ( visprob > random.random(np.shape(visprob)) )
 
-	v = vis_copy.astype(float)
-	return v
+	#v = vis_copy.astype(float)
+	return visprob
 
 
 def MANet(netA, netB, C):
